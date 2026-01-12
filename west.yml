@@ -1,0 +1,14 @@
+manifest:
+  defaults:
+    remote: zephyrproject-rtos
+    revision: main
+  remotes:
+    - name: zephyrproject-rtos
+      url-base: https://github.com/zephyrproject-rtos
+  projects:
+    - name: zephyr
+      path: zephyr
+      revision: main
+      import: true
+  self:
+    path: application

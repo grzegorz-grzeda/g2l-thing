@@ -1,3 +1,18 @@
+build/
+
+.venv/
+.env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+dist/
+.eggs/
+*.egg
+pip-wheel-metadata/
+
 # Prerequisites
 *.d
 
