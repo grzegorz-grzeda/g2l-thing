@@ -1,0 +1,1 @@
+The codebase is a zephyr-west project. It's primary hardware target are ESP32 devices.

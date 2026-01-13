@@ -1,0 +1,1 @@
+The device can be interfaced via UART Shell module.
