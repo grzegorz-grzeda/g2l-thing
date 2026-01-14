@@ -1,0 +1,1 @@
+The device uses MCUBoot as the bootloader

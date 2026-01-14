@@ -22,6 +22,8 @@ def parse_args():
         'flash', help='Flash the firmware to the board')
     flash_parser.add_argument(
         '--port', default=SERIAL_PORT, help='Serial port of the board')
+    flash_parser.add_argument(
+        '-m', '--monitor', action='store_true', help='Start monitor after flashing')
 
     monitor_parser = subparsers.add_parser(
         'monitor', help='Monitor output from the board')
@@ -40,9 +42,11 @@ def main():
             subprocess.run(['west', 'build', '--pristine',
                            '-b', args.board, 'application'])
         else:
-            subprocess.run(['west', 'build', '-b', args.board, 'application'])
+            subprocess.run(['west', 'build'])
     elif args.command == 'flash':
         subprocess.run(['west', 'flash', '--esp-device', args.port])
+        if args.monitor:
+            subprocess.run(['west', 'espressif', 'monitor', '-p', args.port])
     elif args.command == 'monitor':
         subprocess.run(['west', 'espressif', 'monitor', '-p', args.port])
 

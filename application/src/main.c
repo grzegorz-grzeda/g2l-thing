@@ -4,6 +4,7 @@
 #include <zephyr/fs/littlefs.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/settings/settings.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/storage/flash_map.h>
 
@@ -28,11 +29,18 @@ static int storage_init(void) {
     }
 
     LOG_INF("Storage mounted at %s", FS_MOUNT_POINT);
+
+    rc = settings_subsys_init();
+    if (rc != 0) {
+        LOG_ERR("Error initializing settings subsystem (%d)", rc);
+        return rc;
+    }
     return 0;
 }
 
+SYS_INIT(storage_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+
 int main(void) {
-    storage_init();
     LOG_INF("Application started");
 
     while (1) {

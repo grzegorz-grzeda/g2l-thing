@@ -1,0 +1,1 @@
+The device can connect to a WiFi network. The SSID and password for a valid network is stored in storage module.

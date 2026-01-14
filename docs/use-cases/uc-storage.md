@@ -1,0 +1,1 @@
+The device has a configured storage in a File System partition.
