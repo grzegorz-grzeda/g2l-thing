@@ -7,6 +7,7 @@
 #include <zephyr/settings/settings.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/storage/flash_map.h>
+#include "wifi.h"
 
 LOG_MODULE_REGISTER(g2l_thing, LOG_LEVEL_INF);
 
@@ -42,6 +43,12 @@ SYS_INIT(storage_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 
 int main(void) {
     LOG_INF("Application started");
+
+    int rc = wifi_init();
+    if (rc != 0) {
+        LOG_ERR("WiFi initialization failed (%d)", rc);
+        return rc;
+    }
 
     while (1) {
         k_sleep(K_SECONDS(1));
