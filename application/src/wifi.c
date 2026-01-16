@@ -6,12 +6,16 @@
 #include <zephyr/net/dhcpv4_server.h>
 #include <zephyr/net/wifi_mgmt.h>
 #include <zephyr/shell/shell.h>
+#include "rgbled.h"
 
 LOG_MODULE_REGISTER(g2l_wifi, LOG_LEVEL_INF);
 
 static struct net_if* sta_iface;
+static struct net_if* ap_iface;
 static struct wifi_connect_req_params sta_config;
 static struct net_mgmt_event_callback cb;
+
+#define LED_BRIGHTNESS 32
 
 #define MACSTR "%02X:%02X:%02X:%02X:%02X:%02X"
 
@@ -30,6 +34,9 @@ static void wifi_event_handler(struct net_mgmt_event_callback* cb,
     switch (mgmt_event) {
         case NET_EVENT_WIFI_CONNECT_RESULT: {
             LOG_INF("Connected to network '%s'", wifi_ssid);
+            rgbled_set_color(0, 0, LED_BRIGHTNESS,
+                             0);  // Set first LED to green
+            rgbled_update();
             break;
         }
         case NET_EVENT_WIFI_DISCONNECT_RESULT: {
@@ -43,8 +50,10 @@ static void wifi_event_handler(struct net_mgmt_event_callback* cb,
                 }
             } else {
                 LOG_INF("Disconnected from %s", wifi_ssid);
-                break;
             }
+            rgbled_set_color(0, LED_BRIGHTNESS, 0, 0);  // Set first LED to red
+            rgbled_update();
+            break;
         }
         case NET_EVENT_WIFI_AP_ENABLE_RESULT: {
             LOG_INF("AP Mode is enabled. Waiting for station to connect");
@@ -102,6 +111,15 @@ static int get_psk_from_storage(char* psk, size_t max_len) {
     return 0;
 }
 
+static int disconnect_from_wifi(void) {
+    int ret = net_mgmt(NET_REQUEST_WIFI_DISCONNECT, sta_iface, NULL, 0);
+    if (ret) {
+        LOG_ERR("Unable to Disconnect");
+        return ret;
+    }
+    return 0;
+}
+
 static int connect_to_wifi(void) {
     int rc = get_ssid_from_storage(wifi_ssid, sizeof(wifi_ssid));
     if (rc != 0) {
@@ -123,16 +141,19 @@ static int connect_to_wifi(void) {
     sta_config.band = WIFI_FREQ_BAND_2_4_GHZ;
 
     LOG_INF("Connecting to SSID: '%s'", sta_config.ssid);
-
     int ret = net_mgmt(NET_REQUEST_WIFI_CONNECT, sta_iface, &sta_config,
                        sizeof(struct wifi_connect_req_params));
     if (ret) {
         LOG_ERR("Unable to Connect to (%s)", wifi_ssid);
+        disconnect_from_wifi();
+        return ret;
     }
     return 0;
 }
 
 int wifi_init(void) {
+    rgbled_set_color(0, 0, 0, 0);  // Set first LED to red
+    rgbled_update();
     net_mgmt_init_event_callback(&cb, wifi_event_handler, NET_EVENT_WIFI_MASK);
     net_mgmt_add_event_callback(&cb);
 
@@ -141,8 +162,19 @@ int wifi_init(void) {
         LOG_INF("STA: interface no initialized");
         return -EIO;
     }
+    ap_iface = net_if_get_wifi_sap();
+    if (!ap_iface) {
+        LOG_INF("AP: interface no initialized");
+        return -EIO;
+    }
 
-    int ret = connect_to_wifi();
+    int ret = net_mgmt(NET_REQUEST_WIFI_AP_DISABLE, ap_iface, NULL, 0);
+    if (ret) {
+        LOG_ERR("NET_REQUEST_WIFI_AP_DISABLE failed, err: %d", ret);
+        return ret;
+    }
+
+    ret = connect_to_wifi();
 
     return ret;
 }
@@ -190,7 +222,7 @@ static int cmd_wifi_set_ssid_psk(const struct shell* sh,
 static int cmd_wifi_disconnect(const struct shell* sh,
                                size_t argc,
                                char** argv) {
-    int ret = net_mgmt(NET_REQUEST_WIFI_DISCONNECT, sta_iface, NULL, 0);
+    int ret = disconnect_from_wifi();
     if (ret) {
         shell_error(sh, "Unable to Disconnect");
         return ret;

@@ -7,6 +7,7 @@
 #include <zephyr/settings/settings.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/storage/flash_map.h>
+#include "rgbled.h"
 #include "wifi.h"
 
 LOG_MODULE_REGISTER(g2l_thing, LOG_LEVEL_INF);
@@ -44,7 +45,13 @@ SYS_INIT(storage_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 int main(void) {
     LOG_INF("Application started");
 
-    int rc = wifi_init();
+    int rc = rgbled_init();
+    if (rc != 0) {
+        LOG_ERR("RGB LED initialization failed (%d)", rc);
+        return rc;
+    }
+
+    rc = wifi_init();
     if (rc != 0) {
         LOG_ERR("WiFi initialization failed (%d)", rc);
         return rc;

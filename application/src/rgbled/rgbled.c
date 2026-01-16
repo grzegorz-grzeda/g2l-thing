@@ -1,6 +1,7 @@
-#include "led.h"
+#include "rgbled.h"
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(led);
+LOG_MODULE_REGISTER(rgbled);
+#include <stdlib.h>
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/led_strip.h>
@@ -24,7 +25,7 @@ static struct led_rgb pixels[STRIP_NUM_PIXELS];
 
 static const struct device* const strip = DEVICE_DT_GET(STRIP_NODE);
 
-int led_init(void) {
+int rgbled_init(void) {
     if (!device_is_ready(strip)) {
         LOG_ERR("LED strip device %s is not ready", strip->name);
         return -ENODEV;
@@ -33,7 +34,7 @@ int led_init(void) {
     return 0;
 }
 
-int led_set_color(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
+int rgbled_set_color(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
     if (index >= STRIP_NUM_PIXELS) {
         return -EINVAL;
     }
@@ -42,20 +43,22 @@ int led_set_color(uint8_t index, uint8_t r, uint8_t g, uint8_t b) {
     return 0;
 }
 
-int led_set_all_colors(uint8_t r, uint8_t g, uint8_t b) {
+int rgbled_set_all_colors(uint8_t r, uint8_t g, uint8_t b) {
     for (uint8_t i = 0; i < STRIP_NUM_PIXELS; i++) {
-        led_set_color(i, r, g, b);
+        rgbled_set_color(i, r, g, b);
     }
     return 0;
 }
 
-int led_update(void) {
+int rgbled_update(void) {
     return led_strip_update_rgb(strip, pixels, STRIP_NUM_PIXELS);
 }
 
-static int cmd_led_set_color(const struct shell* sh, size_t argc, char** argv) {
+static int cmd_rgbled_set_color(const struct shell* sh,
+                                size_t argc,
+                                char** argv) {
     if (argc != 5) {
-        shell_error(sh, "Usage: led set <index> <r> <g> <b>");
+        shell_error(sh, "Usage: rgbled set <index> <r> <g> <b>");
         return -EINVAL;
     }
 
@@ -64,13 +67,13 @@ static int cmd_led_set_color(const struct shell* sh, size_t argc, char** argv) {
     uint8_t g = (uint8_t)atoi(argv[3]);
     uint8_t b = (uint8_t)atoi(argv[4]);
 
-    int ret = led_set_color(index, r, g, b);
+    int ret = rgbled_set_color(index, r, g, b);
     if (ret < 0) {
         shell_error(sh, "Failed to set LED color: %d", ret);
         return ret;
     }
 
-    ret = led_update();
+    ret = rgbled_update();
     if (ret < 0) {
         shell_error(sh, "Failed to update LED strip: %d", ret);
         return ret;
@@ -84,7 +87,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(led_cmds,
                                SHELL_CMD(set,
                                          NULL,
                                          "Set LED color <index> <r> <g> <b>",
-                                         cmd_led_set_color),
+                                         cmd_rgbled_set_color),
                                SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(rgbled, &led_cmds, "RGB LED commands", NULL);

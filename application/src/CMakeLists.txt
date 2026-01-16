@@ -5,4 +5,4 @@ target_sources(app
     wifi.c
 )
 
-add_subdirectory(led)
+add_subdirectory(rgbled)

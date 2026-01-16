@@ -1,5 +1,5 @@
 target_sources(app 
-    PRIVATE led.c
+    PRIVATE rgbled.c
 )
 
 target_include_directories(app 

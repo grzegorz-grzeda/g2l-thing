@@ -45,7 +45,7 @@ def build_target(board, clean):
         if SNIPPETS:
             build_cmd.extend(['-S', ' -S '.join(SNIPPETS)])
 
-    subprocess.run(build_cmd)
+    subprocess.run(build_cmd, check=True)
 
 
 def main():
@@ -56,9 +56,11 @@ def main():
     elif args.command == 'flash':
         subprocess.run(['west', 'flash', '--esp-device', args.port])
         if args.monitor:
-            subprocess.run(['west', 'espressif', 'monitor', '-p', args.port])
+            subprocess.run(['west', 'espressif', 'monitor',
+                           '-p', args.port], check=True)
     elif args.command == 'monitor':
-        subprocess.run(['west', 'espressif', 'monitor', '-p', args.port])
+        subprocess.run(['west', 'espressif', 'monitor',
+                       '-p', args.port], check=True)
 
 
 if __name__ == '__main__':
