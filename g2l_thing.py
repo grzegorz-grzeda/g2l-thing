@@ -1,7 +1,9 @@
 import argparse
 import subprocess
 
-BOARD = 'esp32c6_devkitc'
+BOARD = 'esp32c6_devkitc/esp32c6/hpcore'
+SNIPPETS = []
+# SNIPPETS = ['flash-16M']
 SERIAL_PORT = '/dev/ttyACM1'
 
 
@@ -33,16 +35,24 @@ def parse_args():
     return parser.parse_args()
 
 
+def build_target(board, clean):
+    print(f"Building {'clean' if clean else ''} firmware for board '{board}'")
+    build_cmd = ['west', 'build']
+    if clean:
+        build_cmd.append('--pristine')
+        build_cmd.append('--sysbuild')
+        build_cmd.extend(['-b', board, 'application'])
+        if SNIPPETS:
+            build_cmd.extend(['-S', ' -S '.join(SNIPPETS)])
+
+    subprocess.run(build_cmd)
+
+
 def main():
     args = parse_args()
 
     if args.command == 'build':
-        print(f"Building firmware for board {args.board}...")
-        if args.clean:
-            subprocess.run(['west', 'build', '--pristine',
-                           '-b', args.board, 'application'])
-        else:
-            subprocess.run(['west', 'build'])
+        build_target(args.board, args.clean)
     elif args.command == 'flash':
         subprocess.run(['west', 'flash', '--esp-device', args.port])
         if args.monitor:
